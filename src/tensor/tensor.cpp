@@ -202,8 +202,40 @@ bool Tensor::isContiguous() const {
 }
 
 tensor_t Tensor::permute(const std::vector<size_t> &order) const {
-    TO_BE_IMPLEMENTED();
-    return std::shared_ptr<Tensor>(new Tensor(_meta, _storage));
+    size_t ndim_ = this->ndim();
+
+    // 尽管已经有了，但是我还是选择校验参数长度
+    if (order.size() != ndim_) {
+        throw std::invalid_argument("permute order size must match tensor ndim");
+    }
+
+    //  校验 order 是否是 0 到 ndim-1 的合法排列 (无越界、无重复)
+    std::vector<bool> seen(ndim_, false);
+    for (size_t dim : order) {
+        if (dim >= ndim_) {
+            throw std::out_of_range("permute order dimension out of bounds");
+        }
+        if (seen[dim]) {
+            throw std::invalid_argument("permute order contains duplicate dimensions");
+        }
+        seen[dim] = true;
+    }
+
+    // 按约定方向计算新的 shape 和 strides
+    // new_shape[i] = shape[order[i]]
+    std::vector<size_t> new_shape(ndim_);
+    std::vector<ptrdiff_t> new_strides(ndim_);
+    const auto &orig_shape = this->shape();
+    const auto &orig_strides = this->strides();
+
+    for (size_t i = 0; i < ndim_; ++i) {
+        new_shape[i] = orig_shape[order[i]];
+        new_strides[i] = orig_strides[order[i]];
+    }
+
+    // 返回全新的 Tensor 视图，底层 Storage 和 Offset 保持原样 (零拷贝)
+    TensorMeta new_meta{this->dtype(), new_shape, new_strides};
+    return std::shared_ptr<Tensor>(new Tensor(new_meta, this->_storage, this->_offset));
 }
 
 tensor_t Tensor::view(const std::vector<size_t> &shape) const {
