@@ -190,7 +190,14 @@ tensor_t Tensor::slice(size_t dim, size_t start, size_t end) const {
 }
 
 void Tensor::load(const void *src_) {
-    TO_BE_IMPLEMENTED();
+    core::context().setDevice(this->deviceType(), this->deviceId()); // 切换到当前的Device上
+    // core::context().runtime().api()->device_synchronize();// 同步张量到自己的设备上, 但是Load时没有在途的计算，而且memcpy_sync就是sync的
+    core::context().runtime().api()->memcpy_sync(
+        this->data(),
+        src_,
+        this->numel() * this->elementSize(),
+        LLAISYS_MEMCPY_H2D);
+    // TO_BE_IMPLEMENTED();
 }
 
 tensor_t Tensor::contiguous() const {
