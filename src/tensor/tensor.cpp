@@ -18,12 +18,18 @@ tensor_t Tensor::create(const std::vector<size_t> &shape,
     size_t ndim_ = shape.size();
     std::vector<ptrdiff_t> strides(ndim_);
     size_t stride = 1;
+    // 构建步长数组
+    // 第k维：步长等于其右侧所有维度大小（Shape）的乘积
+    // 即： strides[k] = ∏^{ndim-1}_{j=k+1}shape[j]
+    // 计算出strides后，可以直接将多维坐标(i_0, i_1, ..., i_{n-1})快速定位到一维物理内存的首地址便宜（offset）：
+    // offset = ∑^{ndim-1}_{d=0}i_d • strides[d]
+    // 将三维坐标快速转化到一维坐标上
     for (size_t i = 1; i <= ndim_; i++) {
-        strides[ndim_ - i] = stride;
+        strides[ndim_ - i] = stride; // 最右侧（最后一个维度）向左倒序遍历计算
         stride *= shape[ndim_ - i];
     }
     TensorMeta meta{dtype, shape, strides};
-    size_t total_elems = stride;
+    size_t total_elems = stride; // 算到最后就是全部的elems数量
     size_t dtype_size = utils::dsize(dtype);
 
     if (device_type == LLAISYS_DEVICE_CPU && core::context().runtime().deviceType() != LLAISYS_DEVICE_CPU) {
