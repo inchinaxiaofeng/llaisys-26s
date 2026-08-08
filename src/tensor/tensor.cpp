@@ -2,6 +2,7 @@
 
 #include "../utils.hpp"
 
+#include <cstddef>
 #include <cstring>
 #include <numeric>
 #include <sstream>
@@ -170,7 +171,31 @@ void Tensor::debug() const {
 }
 
 bool Tensor::isContiguous() const {
-    TO_BE_IMPLEMENTED();
+    // 边界条件 1：0 维张量（标量）或空张量（numel == 0），天然视为连续
+    if (this->shape().empty() || this->numel() == 0) {
+        return true;
+    }
+
+    ptrdiff_t expected_stride = 1;
+    const auto &shape_vec = this->shape();
+    const auto &strides_vec = this->strides();
+
+    // 从最内层（最右侧维度）向外层反向推导校验
+    for (int i = static_cast<int>(shape_vec.size()) - 1; i >= 0; --i) {
+        // size-1 维度索引只能取 0，其 stride 不参与物理寻址，直接跳过校验
+        if (shape_vec[i] == 1) {
+            continue;
+        }
+
+        // 实际步长与按当前 shape 计算出的理论连续步长不一致，说明不连续
+        if (strides_vec[i] != expected_stride) {
+            return false;
+        }
+
+        // 累乘当前维度的大小，作为左侧下一个维度的期望步长
+        expected_stride *= static_cast<ptrdiff_t>(shape_vec[i]);
+    }
+
     return true;
 }
 
@@ -200,7 +225,12 @@ void Tensor::load(const void *src_) {
     // TO_BE_IMPLEMENTED();
 }
 
+// Orig Tensor is contiguous: Return Self
+// Orig Tensor is not contiguous: Return a new
 tensor_t Tensor::contiguous() const {
+    // Conner case 1: 0 Dim Tensor
+    // Conner case 2: Empty Tensor
+
     TO_BE_IMPLEMENTED();
     return std::shared_ptr<Tensor>(new Tensor(_meta, _storage));
 }
