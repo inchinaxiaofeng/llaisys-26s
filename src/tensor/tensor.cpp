@@ -266,8 +266,28 @@ tensor_t Tensor::view(const std::vector<size_t> &shape) const {
 }
 
 tensor_t Tensor::slice(size_t dim, size_t start, size_t end) const {
-    TO_BE_IMPLEMENTED();
-    return std::shared_ptr<Tensor>(new Tensor(_meta, _storage));
+    if (this->ndim() <= dim) {
+        throw std::runtime_error("slice.dim out of range");
+    }
+    if (start > end) {
+        throw std::runtime_error("slice.start should not bigger than slice.end");
+    }
+    const auto &orig_shape = this->shape();
+    const auto &orig_strides = this->strides();
+
+    if (start > orig_shape[dim] || end > orig_shape[dim]) {
+        throw std::runtime_error("slice.start or slice.end out of range");
+    }
+
+    std::vector<size_t> new_shape = orig_shape;
+    new_shape[dim] = end - start;
+    std::vector<ptrdiff_t> new_strides = orig_strides;
+
+    // _offset 单位是字节，strides 单位是元素，必须乘 elementSize() 换算
+    size_t new_offset = this->_offset + start * static_cast<size_t>(orig_strides[dim]) * this->elementSize();
+
+    TensorMeta new_meta{this->dtype(), new_shape, new_strides};
+    return std::shared_ptr<Tensor>(new Tensor(new_meta, this->_storage, new_offset));
 }
 
 void Tensor::load(const void *src_) {
