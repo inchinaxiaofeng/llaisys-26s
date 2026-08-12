@@ -207,3 +207,13 @@ python test/test_infer.py --model /root/Model --test
 - 动手前默画一遍整体数据流（含 shape），把 2.1–2.7 每个算子标在它出现的位置——体会"算子是积木，模型是搭法"。
 - 做完后回看 self_attention 的 causal 条件 `j ≤ kvlen − qlen + i` 和 KV cache 的关系：prefill（qlen=kvlen）时它退化成普通下三角，decode（qlen=1）时全部可见——一个式子覆盖两种场景，值得品味。
 - 这个作业调通的那一刻，你就拥有了一个亲手从张量开始搭出来的、能跑的 1.5B 推理引擎。
+
+---
+
+## 配套分步教程（建议按顺序做）
+
+- `task-3.1-study-guide.md` — 契约与四层骨架：C API、ctypes 镜像、xmake 注册、C++ 类设计
+- `task-3.2-study-guide.md` — 权重加载：bf16/numpy 坑、tensorLoad 链路、映射表代码化
+- `task-3.3-study-guide.md` — prefill 前向：28 层数据流逐张量实现、首 token 对拍
+- `task-3.4-study-guide.md` — KV-Cache 与 decode：状态机、generate 循环、停止条件
+- `task-3.5-study-guide.md` — 对拍与调试：分叉点排查顺序、高频 bug 清单
