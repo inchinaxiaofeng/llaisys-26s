@@ -11,7 +11,10 @@ import llaisys
 import sys
 import io
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+try:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
 
 
 def load_hf_model(model_path=None, device_name="cpu"):
